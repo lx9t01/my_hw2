@@ -63,12 +63,13 @@ void shmemTransposeKernel(const float *input, float *output, int n) {
     const int end_j = j + 4;
 
     for (; j < end_j; ++j) {
-        data[threadIdx.x][threadIdx.y] = input[i + n * j];
+        int index = i + n * j;
+        data[threadIdx.x][j - 64 * blockIdx.y] = input[i + n * j];
     }
     __syncthreads();
 
     for (j = 4 * threadIdx.y + 64 * blockIdx.y; j < end_j; ++j) {
-        output[j + n * i] = data[threadIdx.y][threadIdx.x];
+        output[i + n * j] = data[j - 64 * blockIdx.y][threadIdx.x];
     }
     __syncthreads();
 
