@@ -3,17 +3,101 @@
 PART 1
 
 Question 1.1: Latency Hiding
+The latency of an arithmetic instruction in GPU is approximately more than 10 ns (~10+ns),
+and per clock cycle a GK110 can issue 2 instructions/warp * 4 warp/clock = 8 instructions. 
+Each clock cycle takes 1ns, so with in each cycle there is at most 10 * 8 = 80 instructions
+being executed (hidden). 
+
 
 Question 1.2: Thread Divergence
 (a)
 Yes, there is thread divergence, Because foo() and bar() tend to have different latency 
 and therefore are not synchronized. 
-(b)
 
+(b)
+Yes, because for each therad, the threadIdx.x varies therefore each thread will be executing 
+different numbers of multiplication. It's clearly a diverged thread, because the runtime varies, 
+the threads are not synchronized. 
+Or no (I am not sure about this answer) because if the block size is only one, then for each block
+there will be only 1 thread being executed. The threadIdx.x could be same across different calcualtions, 
+so it could be possible that the threads are synchronized. 
 
 Question 1.3: Coalesced Memory Access
 (a) Yes
+Because the block is 32*32 float, and GPU cache line is 128 byte which corresponds to 32 floats. The 
+address is continuous, and the access is aligned, can be write in within the same warp, so each row write 
+of global memery requires only 1 cache line access, and for the whole block it requires 32 times of access 
+in total. 
+
 (b) No
-(c)
+Because the block address is not continuous, each block element has blocksize.y distance with others, so
+for each row the read process cannot be finished within a warp. The address is not aligned with the block
+index. So this is not coalesced. 
+This may require 32 * 32 = 1024 times of cache line access, yet they only access 32 cache lines of data. 
+
+(c) No
+This write is not aligned, and it will require 32 + 1 = 33 cache lines to fill the data. 
 
 Question 1.4: Bank Conflicts and Instruction Dependencies
+(a) Yes ?
+There is bank conflicts in this code. 
+There are 1 32-way bank conflict in rhs[k + 128 * j] and 1 32-way bank conflict in rhs[(k + 1) + 128 * j]
+
+(b) 
+1) l1 = lhs[i + 32 * k];
+2) r1 = rhs[k + 128 * j];
+3) o1 = output[i + 32 * j];
+4) o1 += l1 * r1;
+5) output[i + 32 * j] = o1;
+6) l2 = lhs[i + 32 * (k + 1)];
+7) r2 = rhs[(k + 1) + 128 * j];
+8) o2 = output[i + 32 * j];
+9) o2 += l2 * r2;
+10) output[i + 32 * j] = o2;
+
+(c) ?
+for the first line of code, the instruction dependencies pairs are: 
+4) depends on (use <= to show) 1);
+4) <= 2)
+4) <= 3)
+5) <= 4)
+similarly, the second line of code will have dependencies: 
+9) <= 6)
+9) <= 7)
+9) <= 8)
+10) <= 9)
+also, between the two lines of code we should realize that 
+3 <= 10)
+8) <= 5) 
+that each value should be stored before it can be taken again. 
+
+(d) minimum number of variables used, and minimized number of instructions
+int i = threadIdx.x;
+int j = threadIdx.y;
+for (int k = 0; k < 128; k += 2) {
+	int l1 = lhs[i + 32 * k];
+	int l2 = lhs[i + 32 * (k + 1)];
+	int o = output[i + 32 * j];
+	o += l1 * r1;
+	int r1 = rhs[k + 128 * j];
+	int r2 = rhs[(k + 1) + 128 * j];
+	o += l2 * r2;
+	output[i + 32 * j] = o;
+}
+
+(e)
+We can further improve the runtime by arranging the memory read and calculation separately, 
+overlapping the total memory read/write, to minimize the number of memory transactions to hide latency. 
+int i = threadIdx.x;
+int j = threadIdx.y;
+for (int k = 0; k < 128; k += 2) {
+	int l1 = lhs[i + 32 * k];
+	int l2 = lhs[i + 32 * (k + 1)];
+	int r1 = rhs[k + 128 * j];
+	int r2 = rhs[(k + 1) + 128 * j];
+	int o = output[i + 32 * j];
+	o += l1 * r1;
+	o += l2 * r2;
+	output[i + 32 * j] = o;
+}
+
