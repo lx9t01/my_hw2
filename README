@@ -1,0 +1,19 @@
+// README
+
+PART 1
+
+Question 1.1: Latency Hiding
+
+Question 1.2: Thread Divergence
+(a)
+Yes, there is thread divergence, Because foo() and bar() tend to have different latency 
+and therefore are not synchronized. 
+(b)
+
+
+Question 1.3: Coalesced Memory Access
+(a) Yes
+(b) No
+(c)
+
+Question 1.4: Bank Conflicts and Instruction Dependencies
