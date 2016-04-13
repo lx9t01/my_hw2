@@ -90,20 +90,21 @@ void optimalTransposeKernel(const float *input, float *output, int n) {
     int j = 4 * threadIdx.y + 64 * blockIdx.y;
 
     // with unrolling loop and separate all the memory access with calculation (ILP)
-    data[j - 64 * blockIdx.y][threadIdx.x] = input[i + n * j];
-    data[j + 1 - 64 * blockIdx.y][threadIdx.x] = input[i + n * (j + 1)];
-    data[j + 2 - 64 * blockIdx.y][threadIdx.x] = input[i + n * (j + 2)];
-    data[j + 3 - 64 * blockIdx.y][threadIdx.x] = input[i + n * (j + 3)];
+    int index = i + n * j;
+    data[4 * threadIdx.y][threadIdx.x] = input[index];
+    data[4 * threadIdx.y + 1][threadIdx.x] = input[index + n];
+    data[4 * threadIdx.y + 2][threadIdx.x] = input[index + 2 * n];
+    data[4 * threadIdx.y + 3][threadIdx.x] = input[index + 3 * n];
 
     __syncthreads();
 
     // also we get rid of a few initialization of i and j originally inside the loop;
     i = threadIdx.x + 64 * blockIdx.y;
     j = 4 * threadIdx.y + 64 * blockIdx.x;
-    output[i + n * j] = data[threadIdx.x][4 * threadIdx.y];
-    output[i + n * (j + 1)] = data[threadIdx.x][4 * threadIdx.y + 1];
-    output[i + n * (j + 2)] = data[threadIdx.x][4 * threadIdx.y + 2];
-    output[i + n * (j + 3)] = data[threadIdx.x][4 * threadIdx.y + 3];
+    output[index] = data[threadIdx.x][4 * threadIdx.y];
+    output[index + n] = data[threadIdx.x][4 * threadIdx.y + 1];
+    output[index + 2 * n] = data[threadIdx.x][4 * threadIdx.y + 2];
+    output[index + 3 * n] = data[threadIdx.x][4 * threadIdx.y + 3];
 
 }
 
