@@ -56,7 +56,7 @@ void shmemTransposeKernel(const float *input, float *output, int n) {
     // memory bank conflicts (0 bank conflicts should be possible using
     // padding). Again, comment on all sub-optimal accesses.
 
-    __shared__ float data[64][65]; // memory padding using one more column
+    __shared__ float data[65][64]; // memory padding using one more column
 
     int i = threadIdx.x + 64 * blockIdx.x;
     int j = 4 * threadIdx.y + 64 * blockIdx.y;
@@ -66,12 +66,15 @@ void shmemTransposeKernel(const float *input, float *output, int n) {
         data[j - 64 * blockIdx.y][threadIdx.x] = input[i + n * j];
     }
     __syncthreads();
-    // i = 4 * threadIdx.y + 64 * blockIdx.y;
-    // j = threadIdx.x + 64 * blockIdx.x;
-    j = 4 * threadIdx.y + 64 * blockIdx.y;
-    // // end_j = j + 4;
-    for (; j < end_j; ++j) {
-        output[j + n * i] = data[j - 64 * blockIdx.y][threadIdx.x];
+    // j = 4 * threadIdx.y + 64 * blockIdx.y;
+    // for (; j < end_j; ++j) {
+    //     output[j + n * i] = data[j - 64 * blockIdx.y][threadIdx.x];
+    // }
+
+    for (int m = 0; m < 4; ++m) {
+        i = threadIdx.x+ 64*blockIdx.y;
+        j = 4*threadIdx.y+m + 64*blockIdx.x;
+        output[i+n*j] = data[threadIdx.x][4 * threadIdx.y + m]
     }
     
 }
