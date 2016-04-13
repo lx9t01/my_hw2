@@ -101,6 +101,7 @@ void optimalTransposeKernel(const float *input, float *output, int n) {
     // also we get rid of a few initialization of i and j originally inside the loop;
     i = threadIdx.x + 64 * blockIdx.y;
     j = 4 * threadIdx.y + 64 * blockIdx.x;
+    index = i + n * j;
     output[index] = data[threadIdx.x][4 * threadIdx.y];
     output[index + n] = data[threadIdx.x][4 * threadIdx.y + 1];
     output[index + 2 * n] = data[threadIdx.x][4 * threadIdx.y + 2];
