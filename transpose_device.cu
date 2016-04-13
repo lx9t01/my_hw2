@@ -86,7 +86,8 @@ void optimalTransposeKernel(const float *input, float *output, int n) {
     // This should be based off of your shmemTransposeKernel.
     // Use any optimization tricks discussed so far to improve performance.
     // Consider ILP and loop unrolling.
-    
+    __shared__ float data[65][64]; 
+
     int i = threadIdx.x + 64 * blockIdx.x;
     int j = 4 * threadIdx.y + 64 * blockIdx.y;
     int end_j = j + 4;
