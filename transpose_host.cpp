@@ -37,12 +37,12 @@ void checkTransposed(const float *a, const float *b, int n) {
                 fprintf(stderr,
                     "Transpose failed: a[%d, %d] != b[%d, %d], %f != %f\n",
                     i, j, j, i, a[i + n * j], b[j + n * i]);
-                // assert(correct);
+                assert(correct);
             }
         }
     }
 
-    // assert(correct);
+    assert(correct);
 }
 
 /* Naive CPU transpose, takes an n x n matrix in input and writes to output. */
