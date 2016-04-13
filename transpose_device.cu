@@ -56,7 +56,10 @@ void shmemTransposeKernel(const float *input, float *output, int n) {
     // memory bank conflicts (0 bank conflicts should be possible using
     // padding). Again, comment on all sub-optimal accesses.
 
-    __shared__ float data[65][64]; // memory padding using one more column
+    __shared__ float data[65][64]; // memory padding using one more row
+    // because write to shmem does not transpose, read from shmem takes transpose
+    // so one more row will shift the column-based read bank index by 1, which 
+    // essentially eliminates bank conflict when read from shmem. 
 
     int i = threadIdx.x + 64 * blockIdx.x;
     int j = 4 * threadIdx.y + 64 * blockIdx.y;
@@ -66,31 +69,39 @@ void shmemTransposeKernel(const float *input, float *output, int n) {
         data[j - 64 * blockIdx.y][threadIdx.x] = input[i + n * j];
     }
     __syncthreads();
-    // j = 4 * threadIdx.y + 64 * blockIdx.y;
-    // for (; j < end_j; ++j) {
-    //     output[j + n * i] = data[j - 64 * blockIdx.y][threadIdx.x];
-    // }
 
     for (int m = 0; m < 4; ++m) {
-        i = threadIdx.x+ 64*blockIdx.y;
-        j = 4*threadIdx.y+m + 64*blockIdx.x;
-        output[i+n*j] = data[threadIdx.x][4 * threadIdx.y + m];
+        i = threadIdx.x + 64 * blockIdx.y;
+        j = 4 * threadIdx.y + m + 64 * blockIdx.x;
+        output[i + n * j] = data[threadIdx.x][4 * threadIdx.y + m];
     }
+    // I believe there will be no bank conflicts because of padding, 
+    // and the cache line access is minimized due to warp-based aligned
+    // memory access. 
     
 }
 
 __global__
 void optimalTransposeKernel(const float *input, float *output, int n) {
-    // TODO: This should be based off of your shmemTransposeKernel.
+    // This should be based off of your shmemTransposeKernel.
     // Use any optimization tricks discussed so far to improve performance.
     // Consider ILP and loop unrolling.
-
-    const int i = threadIdx.x + 64 * blockIdx.x;
+    
+    int i = threadIdx.x + 64 * blockIdx.x;
     int j = 4 * threadIdx.y + 64 * blockIdx.y;
-    const int end_j = j + 4;
+    int end_j = j + 4;
 
-    for (; j < end_j; j++)
-        output[j + n * i] = input[i + n * j];
+    for (; j < end_j; ++j) {
+        data[j - 64 * blockIdx.y][threadIdx.x] = input[i + n * j];
+    }
+    __syncthreads();
+
+    for (int m = 0; m < 4; ++m) {
+        i = threadIdx.x + 64 * blockIdx.y;
+        j = 4 * threadIdx.y + m + 64 * blockIdx.x;
+        output[i + n * j] = data[threadIdx.x][4 * threadIdx.y + m];
+    }
+
 }
 
 void cudaTranspose(
