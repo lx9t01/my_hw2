@@ -60,9 +60,9 @@ void shmemTransposeKernel(const float *input, float *output, int n) {
     // so one more row will shift the column-based read bank index by 1, which 
     // essentially eliminates bank conflict when read from shmem. 
 
-    const int i = threadIdx.x + 64 * blockIdx.x;
+    int i = threadIdx.x + 64 * blockIdx.x;
     int j = 4 * threadIdx.y + 64 * blockIdx.y;
-    int end_j = j + 4;
+    const int end_j = j + 4;
 
     for (; j < end_j; ++j) {
         data[j - 64 * blockIdx.y][threadIdx.x] = input[i + n * j];
