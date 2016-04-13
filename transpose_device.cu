@@ -58,17 +58,20 @@ void shmemTransposeKernel(const float *input, float *output, int n) {
 
     __shared__ float data[64][65]; // memory padding using one more column
 
-    const int i = threadIdx.x + 64 * blockIdx.x;
+    int i = threadIdx.x + 64 * blockIdx.x;
     int j = 4 * threadIdx.y + 64 * blockIdx.y;
-    const int end_j = j + 4;
+    int end_j = j + 4;
 
     for (; j < end_j; ++j) {
-        data[threadIdx.x][j - 64 * blockIdx.y] = input[i + n * j];
+        data[j - 64 * blockIdx.y][threadIdx.x] = input[i + n * j];
     }
     __syncthreads();
+    i = blockIdx.y * 64 + threadIdx.x;
+    j = blockIdx.x * 64 + 4 * threadIdx.y;
+    end_j = j + 4;
 
-    for (j = 4 * threadIdx.y + 64 * blockIdx.y; j < end_j; ++j) {
-        output[i + n * j] = data[j - 64 * blockIdx.y][threadIdx.x];
+    for (; j < end_j; ++j) {
+        output[i + n * j] = data[threadIdx.x][j - 64 * blockIdx.y];
     }
     
 
