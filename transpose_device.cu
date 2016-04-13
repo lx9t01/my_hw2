@@ -106,7 +106,7 @@ void optimalTransposeKernel(const float *input, float *output, int n) {
     index = threadIdx.x + by + n * (ty + bx);
     output[index] = data[threadIdx.x][ty];
     output[index + n] = data[threadIdx.x][ty + 1];
-    output[index + 2 * n] = data[gthreadIdx.x][ty + 2];
+    output[index + 2 * n] = data[threadIdx.x][ty + 2];
     output[index + 3 * n] = data[threadIdx.x][ty + 3];
 
 }
