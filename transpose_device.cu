@@ -3,7 +3,7 @@
 #include "transpose_device.cuh"
 
 /*
- * TODO for all kernels (including naive):
+ * for all kernels (including naive):
  * Leave a comment above all non-coalesced memory accesses and bank conflicts.
  * Make it clear if the suboptimal access is a read or write. If an access is
  * non-coalesced, specify how many cache lines it touches, and if an access
@@ -35,7 +35,6 @@
  */
 __global__
 void naiveTransposeKernel(const float *input, float *output, int n) {
-    // do not modify code, just comment on suboptimal accesses
 
     const int i = threadIdx.x + 64 * blockIdx.x;
     int j = 4 * threadIdx.y + 64 * blockIdx.y;
@@ -44,24 +43,24 @@ void naiveTransposeKernel(const float *input, float *output, int n) {
     for (; j < end_j; j++)
         output[j + n * i] = input[i + n * j]; // this line is not optimal
         // because copy data from input to output is NOT aligned. 
-        // the output data memeory address jumps with interval n, therefore
-        // it's not in a single cache line, therefore requires multiple cache
-        // line access, and not minimal times. So it's not coalesced access. 
+        // the output data memeory address is not continuous, therefore within per warp,
+        // it cannot be accessed with only one single cache line, therefore requires multiple cache
+        // line access, and in serial times. So it's not coalesced access. 
+    // when read from input data, it's (kind of) coalesced, but write to output is not. 
+    // for EACH WARP there will need 32 cache line to write. (because the elements are not continuous). 
+    // In total it will need (n ** 2) / 32 number of cache line.  
 }
 
 __global__
 void shmemTransposeKernel(const float *input, float *output, int n) {
-    // Modify transpose kernel to use shared memory. All global memory
-    // reads and writes should be coalesced. Minimize the number of shared
-    // memory bank conflicts (0 bank conflicts should be possible using
-    // padding). Again, comment on all sub-optimal accesses.
+    // I have developed a version with non-coaleased memory access, but now it's totally coalesced access. 
 
     __shared__ float data[65][64]; // memory padding using one more row
     // because write to shmem does not transpose, read from shmem takes transpose
     // so one more row will shift the column-based read bank index by 1, which 
     // essentially eliminates bank conflict when read from shmem. 
 
-    int i = threadIdx.x + 64 * blockIdx.x;
+    const int i = threadIdx.x + 64 * blockIdx.x;
     int j = 4 * threadIdx.y + 64 * blockIdx.y;
     int end_j = j + 4;
 
@@ -71,10 +70,11 @@ void shmemTransposeKernel(const float *input, float *output, int n) {
     __syncthreads();
 
     for (int m = 0; m < 4; ++m) {
-        i = threadIdx.x + 64 * blockIdx.y;
+        // i = threadIdx.x + 64 * blockIdx.y;
         j = 4 * threadIdx.y + m + 64 * blockIdx.x;
         output[i + n * j] = data[threadIdx.x][4 * threadIdx.y + m];
     }
+    // the reading/writing from shmem to gloabl mem is aligned and therefore it's coalesced access
     // I believe there will be no bank conflicts because of padding, 
     // and the cache line access is minimized due to warp-based aligned
     // memory access. 
@@ -83,9 +83,7 @@ void shmemTransposeKernel(const float *input, float *output, int n) {
 
 __global__
 void optimalTransposeKernel(const float *input, float *output, int n) {
-    // This should be based off of your shmemTransposeKernel.
-    // Use any optimization tricks discussed so far to improve performance.
-    // Consider ILP and loop unrolling.
+
     __shared__ float data[65][64]; 
 
     int i = threadIdx.x + 64 * blockIdx.x;
@@ -110,8 +108,8 @@ void optimalTransposeKernel(const float *input, float *output, int n) {
     // }
 
     // also we get rid of a few initialization of i and j originally inside the loop;
-    i = threadIdx.x + 64 * blockIdx.y;
-    j = 4 * threadIdx.y + 64 * blockIdx.x;
+    // i = threadIdx.x + 64 * blockIdx.y;
+    // j = 4 * threadIdx.y + 64 * blockIdx.x;
     output[i + n * j] = data[threadIdx.x][4 * threadIdx.y];
     output[i + n * (j + 1)] = data[threadIdx.x][4 * threadIdx.y + 1];
     output[i + n * (j + 2)] = data[threadIdx.x][4 * threadIdx.y + 2];
