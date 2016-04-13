@@ -101,7 +101,31 @@ for (int k = 0; k < 128; k += 2) {
 }
 
 PART 2
+Index of the GPU with the lowest temperature: 2 (42 C)
+Time limit for this program set to 10 seconds
+Size 512 naive CPU: 0.003744 ms
+Size 512 GPU memcpy: 0.035552 ms
+Size 512 naive GPU: 0.100448 ms
+Size 512 shmem GPU: 0.052320 ms
+Size 512 optimal GPU: 0.049952 ms
 
+Size 1024 naive CPU: 1.428512 ms
+Size 1024 GPU memcpy: 0.087200 ms
+Size 1024 naive GPU: 0.305280 ms
+Size 1024 shmem GPU: 0.156896 ms
+Size 1024 optimal GPU: 0.151584 ms
+
+Size 2048 naive CPU: 33.759422 ms
+Size 2048 GPU memcpy: 0.269248 ms
+Size 2048 naive GPU: 1.138400 ms
+Size 2048 shmem GPU: 0.554624 ms
+Size 2048 optimal GPU: 0.544192 ms
+
+Size 4096 naive CPU: 153.666107 ms
+Size 4096 GPU memcpy: 1.001056 ms
+Size 4096 naive GPU: 4.110880 ms
+Size 4096 shmem GPU: 2.161728 ms
+Size 4096 optimal GPU: 2.116928 ms
 
 BONUS
 1, there will be more times of memory access in the first method with two separate vec_add call
