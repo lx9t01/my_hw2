@@ -85,6 +85,7 @@ __global__
 void optimalTransposeKernel(const float *input, float *output, int n) {
 
     __shared__ float data[65][64]; 
+    // for ILP, we can reduce the calculation by store the temporary variable.
     int bx = 64 * blockIdx.x;
     int ty = 4 * threadIdx.y;
     int by = 64 * blockIdx.y;

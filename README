@@ -70,6 +70,7 @@ also, between the two lines of code we should realize that
 that each value should be stored before it can be taken again. 
 
 (d) minimum number of variables used, and minimized number of instructions
+(ILP implemented in the question (e))
 int i = threadIdx.x;
 int j = threadIdx.y;
 for (int k = 0; k < 128; k += 2) {
@@ -85,8 +86,7 @@ for (int k = 0; k < 128; k += 2) {
 The dependencies being removed are the step 5) and 8), which stores and reads in the value of output again
 
 (e)
-We can further improve the runtime by arranging the memory read and calculation separately, 
-overlapping the total memory read/write, to minimize the number of memory transactions to hide latency. 
+We can further improve the runtime by applying ILP, arranging the memory read and calculation separately, overlapping the total memory read/write, to minimize the number of memory transactions to hide latency. 
 int i = threadIdx.x;
 int j = threadIdx.y;
 for (int k = 0; k < 128; k += 2) {
@@ -99,33 +99,38 @@ for (int k = 0; k < 128; k += 2) {
 	o += l2 * r2;
 	output[i + 32 * j] = o;
 }
+Or we might want to use loop unfold to further inprove the GPU speed. 
 
 PART 2
-Index of the GPU with the lowest temperature: 2 (42 C)
+Index of the GPU with the lowest temperature: 2 (40 C)
 Time limit for this program set to 10 seconds
 Size 512 naive CPU: 0.003744 ms
-Size 512 GPU memcpy: 0.035552 ms
-Size 512 naive GPU: 0.100448 ms
-Size 512 shmem GPU: 0.052320 ms
-Size 512 optimal GPU: 0.049952 ms
+Size 512 GPU memcpy: 0.035744 ms
+Size 512 naive GPU: 0.101600 ms
+Size 512 shmem GPU: 0.049920 ms
+Size 512 optimal GPU: 0.048352 ms
 
-Size 1024 naive CPU: 1.428512 ms
-Size 1024 GPU memcpy: 0.087200 ms
-Size 1024 naive GPU: 0.305280 ms
-Size 1024 shmem GPU: 0.156896 ms
-Size 1024 optimal GPU: 0.151584 ms
+Size 1024 naive CPU: 1.685216 ms
+Size 1024 GPU memcpy: 0.085728 ms
+Size 1024 naive GPU: 0.309472 ms
+Size 1024 shmem GPU: 0.155712 ms
+Size 1024 optimal GPU: 0.151456 ms
 
-Size 2048 naive CPU: 33.759422 ms
-Size 2048 GPU memcpy: 0.269248 ms
-Size 2048 naive GPU: 1.138400 ms
-Size 2048 shmem GPU: 0.554624 ms
-Size 2048 optimal GPU: 0.544192 ms
+Size 2048 naive CPU: 34.277855 ms
+Size 2048 GPU memcpy: 0.268544 ms
+Size 2048 naive GPU: 1.142784 ms
+Size 2048 shmem GPU: 0.552384 ms
+Size 2048 optimal GPU: 0.545248 ms
 
-Size 4096 naive CPU: 153.666107 ms
-Size 4096 GPU memcpy: 1.001056 ms
-Size 4096 naive GPU: 4.110880 ms
-Size 4096 shmem GPU: 2.161728 ms
-Size 4096 optimal GPU: 2.116928 ms
+Size 4096 naive CPU: 153.340607 ms
+Size 4096 GPU memcpy: 1.007552 ms
+Size 4096 naive GPU: 4.134528 ms
+Size 4096 shmem GPU: 2.166912 ms
+Size 4096 optimal GPU: 2.117216 ms
+
+I applied loop unfold and instruction level parallelism to optimize the algorithm, yet the 
+improvement is not very obvious. 
+
 
 BONUS
 1, there will be more times of memory access in the first method with two separate vec_add call
