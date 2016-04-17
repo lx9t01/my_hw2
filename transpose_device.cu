@@ -55,7 +55,7 @@ __global__
 void shmemTransposeKernel(const float *input, float *output, int n) {
     // I have developed a version with non-coaleased memory access, but now it's totally coalesced access. 
 
-    __shared__ float data[65][64]; // memory padding using one more row
+    __shared__ float data[64][65]; // memory padding using one more row
     // because write to shmem does not transpose, read from shmem takes transpose
     // so one more row will shift the column-based read bank index by 1, which 
     // essentially eliminates bank conflict when read from shmem. 

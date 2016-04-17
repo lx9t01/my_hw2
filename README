@@ -133,6 +133,10 @@ improvement is not very obvious.
 
 
 BONUS
-1, there will be more times of memory access in the first method with two separate vec_add call
+1, there will be more times of memory access in the first method with two separate vec_add call; 
+1.1, or there moght be more IO access for the first instruction, as there will be more read/write from
+either shared memory, global memory or even registers. 
 2, sometimes there are instruction sets that allows 3 element add for certain hardware or operation system, 
-it's a bottom-level optimization that could probably speed up the add for three elements. 
+it's a hardware based bottom-level optimization that could probably speed up the add for three elements. 
+2.1, Also, the second approach will TEND TO use more register access than memory access, potentially speed
+up the 3-element add. 
