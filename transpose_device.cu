@@ -84,7 +84,7 @@ void shmemTransposeKernel(const float *input, float *output, int n) {
 __global__
 void optimalTransposeKernel(const float *input, float *output, int n) {
 
-    __shared__ float data[65][64]; 
+    __shared__ float data[64][65]; 
     // for ILP, we can reduce the calculation by store the temporary variable.
     int bx = 64 * blockIdx.x;
     int ty = 4 * threadIdx.y;
